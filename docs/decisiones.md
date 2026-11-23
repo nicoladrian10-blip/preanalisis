@@ -39,7 +39,7 @@ Registro de lo que decidí sin preguntarte, para que puedas revisarlo o cambiarl
 - **Indicadores sin datos** se agrupan en una tarjeta «Pendientes de calcular» en lugar de mostrar semáforos vacíos.
 
 ## WhatsApp
-- **Número por defecto vacío:** no me diste tu número (`[TU_NÚMERO]`). Mientras esté vacío, el botón abre WhatsApp para elegir el contacto. Se rellena en `CONFIG.asesor.telefono` (README §1).
+- **Número por defecto:** `34687040876` en `CONFIG.asesor.telefono` (README §1). Si se deja vacío, el botón abre WhatsApp para elegir el contacto.
 - **Emojis:** solo los de semáforo 🟢🟡🔴. Los indicadores sin semáforo llevan «•».
 - **Recorte:** cada línea tiene prioridad. Si el mensaje supera el objetivo (1.500/2.500 caracteres) o el enlace supera 4.000 caracteres codificado, se quitan primero los detalles (desglose de gastos, seguros secundarios, ahorro por producto) y se añade «Versión abreviada». «Copiar texto» copia siempre la versión íntegra.
 - **Espacio no separable** entre cifra y €/% para que WhatsApp no parta «750 €».

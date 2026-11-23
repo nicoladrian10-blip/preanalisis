@@ -375,6 +375,13 @@ describe('Enlace de WhatsApp y parámetros', () => {
     const { PA: P2 } = cargar((C) => { C.asesor.telefono = '+34 699 000 111'; C.asesor.nombre = 'Nicol'; });
     assert.deepEqual({ ...P2.leerParametros('') }, { telefono: '34699000111', telefonoInvalido: false, nombre: 'Nicol' });
   });
+  it('el número por defecto de CONFIG es válido y es el destino sin ?asesor', () => {
+    const p = PA.leerParametros('');
+    assert.equal(PA.normalizarTelefono(CONFIG.asesor.telefono), CONFIG.asesor.telefono, 'formato internacional, solo dígitos');
+    assert.equal(p.telefono, CONFIG.asesor.telefono);
+    assert.ok(PA.textoResumen(EXPRES, 'express', { telefono: p.telefono }).enlace.startsWith('https://wa.me/' + CONFIG.asesor.telefono + '?text='));
+    assert.equal(PA.leerParametros('?asesor=34611222333').telefono, '34611222333', '?asesor tiene prioridad');
+  });
   it('el nombre del asesor se sanea (sin HTML)', () => {
     assert.equal(PA.leerParametros('?nombreAsesor=%3Cscript%3Ealert(1)%3C%2Fscript%3E').nombre, 'scriptalertscript');
     assert.equal(PA.leerParametros('?nombreAsesor=%E0%A4%A').nombre, CONFIG.asesor.nombre); // mal codificado
