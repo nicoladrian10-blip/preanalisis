@@ -67,7 +67,7 @@ async function main() {
     await captura(pre + '-01-portada');
     await clic('#b-empezar'); await captura(pre + '-02-modalidad');
     await clic('.modo[data-modo="express"]');
-    await llenar({ edad: '35-44', pareja: 'si', hogar: '4', hijos: '2', hijoEdad1: '6-11', hijoEdad2: '12-17', laboral: 'asalariado', laboralPareja: 'asalariado', vivienda: 'hipoteca' });
+    await llenar({ edad: 41, pareja: 'si', edadPareja: 39, hogar: '4', hijos: '2', hijoEdad1: 9, hijoEdad2: 13, laboral: 'asalariado', laboralPareja: 'asalariado', vivienda: 'hipoteca' });
     await captura(pre + '-03-perfil');
     await sig(); await sig(); // validación: sin ingresos no avanza
     await captura(pre + '-04-ingresos-validacion');
@@ -75,20 +75,20 @@ async function main() {
     await captura(pre + '-05-ingresos');
     await sig();
     await llenar({ cuotaHipoteca: 750, gSuministros: 180, gSeguros: 90, gColegios: 200, gTransporte: 250, gOtrosFijos: 130 }); await sig();
-    await llenar({ gVariables: 900, ahorroMensual: 600, ahorroDisponible: '10-30' }); await captura(pre + '-06-ahorro-mes'); await sig();
+    await llenar({ gVariables: 900, ahorroMensual: 600, ahorroDisponible: 18000 }); await captura(pre + '-06-ahorro-mes'); await sig();
     await llenar({ hipPendiente: 140000, deudas: ['coche'] }); await llenar({ d_coche_pend: 9000, d_coche_cuota: 250 }); await captura(pre + '-07-deudas'); await sig();
-    await llenar({ objetivos: ['colchon', 'estudios'] }); await llenar({ o_colchon_importe: 10000, o_colchon_plazo: '1-3', o_estudios_importe: 20000, o_estudios_plazo: '10-20' }); await sig();
+    await llenar({ objetivos: ['colchon', 'estudios'] }); await llenar({ o_colchon_importe: 10000, o_colchon_plazo: 2, o_estudios_importe: 20000, o_estudios_plazo: 12 }); await sig();
     await llenar({ preocupacion: 'jubilacion', horario: ['tardes'], comentario: 'Quiero saber si llegaremos bien a la jubilación' }); await sig();
     await captura(pre + '-08-diagnostico-expres');
     // Completar el resto sin perder lo respondido
     await clic('#b-completar');
-    await llenar({ savCuentas: '10-30', savDepositos: 'nada', savFondos: 'lt3', savPlanes: '3-10', savAcciones: 'nada', savOtros: 'nada' }); await sig();
+    await llenar({ savCuentas: 18000, savDepositos: 0, savFondos: 2500, savPlanes: 7000, savAcciones: 0, savOtros: 0 }); await captura(pre + '-08a-ahorro-acumulado'); await sig();
     await llenar({ hipTipo: 'variable', hipAnos: 22 }); await sig();
-    await llenar({ valorVivienda: '200-300', otrosInmuebles: 'no' }); await sig();
+    await llenar({ valorVivienda: 240000, otrosInmuebles: 'no' }); await captura(pre + '-08b-inmuebles'); await sig();
     await llenar({ seg_vida: 'si', seg_salud: 'no', seg_hogar: 'si', seg_decesos: 'nose', seg_ahorro: 'no' });
     await llenar({ seg_vida_prima: 25, seg_vida_capital: 150000, seg_hogar_prima: 30 }); await captura(pre + '-09-proteccion'); await sig();
     await llenar({ edadJubilacion: 67, anosCotizados: 15 }); await sig();
-    await sig(); // objetivos ya respondidos
+    await captura(pre + '-09b-objetivos'); await sig(); // objetivos ya respondidos
     await llenar({ r1: '2', r2: '2', r3: '2', r4: '1' }); await captura(pre + '-10-riesgo'); await sig();
     await sig(); // final ya respondido
     await captura(pre + '-11-diagnostico-completo');

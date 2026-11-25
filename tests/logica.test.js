@@ -32,28 +32,28 @@ const base = (extra) => Object.assign({ ingTitular: 1000, laboral: 'autonomo' },
 
 // Familia completa (modalidad Completo)
 const FAMILIA = {
-  edad: '35-44', pareja: 'si', hogar: '4', hijos: '2', hijoEdad1: '6-11', hijoEdad2: '12-17',
+  edad: 40, pareja: 'si', edadPareja: 38, hogar: '4', hijos: '2', hijoEdad1: 9, hijoEdad2: 14,
   laboral: 'asalariado', laboralPareja: 'asalariado', vivienda: 'hipoteca',
   ingTitular: 2100, pagasTitular: '14', ingPareja: 1500, pagasPareja: '12', estabilidad: 'fijos',
   cuotaHipoteca: 750, gSuministros: 180, gSeguros: 90, gColegios: 200, gTransporte: 250, gOtrosFijos: 130,
   gVariables: 900, ahorroMensual: 600,
-  savCuentas: '10-30', savDepositos: 'nada', savFondos: 'lt3', savPlanes: '3-10', savAcciones: 'nada', savOtros: 'nada',
+  savCuentas: 20000, savDepositos: 0, savFondos: 1500, savPlanes: 6500, savAcciones: 0, savOtros: 0,
   hipPendiente: 140000, hipTipo: 'variable', hipAnos: 22, deudas: ['coche'], d_coche_pend: 9000, d_coche_cuota: 250,
-  valorVivienda: '200-300', otrosInmuebles: 'no',
+  valorVivienda: 250000, otrosInmuebles: 'no',
   seg_vida: 'si', seg_vida_prima: 25, seg_vida_capital: 150000, seg_salud: 'no', seg_hogar: 'si', seg_hogar_prima: 30, seg_decesos: 'nose', seg_ahorro: 'no',
   edadJubilacion: 67, anosCotizados: 15,
-  objetivos: ['colchon', 'estudios'], o_colchon_importe: 10000, o_colchon_plazo: '1-3', o_estudios_importe: 20000, o_estudios_plazo: '10-20',
+  objetivos: ['colchon', 'estudios'], o_colchon_importe: 10000, o_colchon_plazo: 2, o_estudios_importe: 20000, o_estudios_plazo: 15,
   r1: '2', r2: '2', r3: '2', r4: '1',
   preocupacion: 'jubilacion', comentario: 'Quiero saber si llegaremos bien a la jubilación', horario: ['tardes']
 };
 
 // Exprés (solo bloques esenciales)
 const EXPRES = {
-  edad: '25-34', pareja: 'no', hogar: '1', hijos: '0', laboral: 'asalariado', vivienda: 'alquiler',
+  edad: 30, pareja: 'no', hogar: '1', hijos: '0', laboral: 'asalariado', vivienda: 'alquiler',
   ingTitular: 1800, pagasTitular: '12', estabilidad: 'fijos',
   gAlquiler: 700, gSuministros: 90, gSeguros: 20, gTransporte: 60, gOtrosFijos: 50,
-  gVariables: 450, ahorroMensual: 300, ahorroDisponible: '3-10',
-  deudas: ['ninguna'], objetivos: ['vivienda'], o_vivienda_importe: 30000, o_vivienda_plazo: '3-5',
+  gVariables: 450, ahorroMensual: 300, ahorroDisponible: 6500,
+  deudas: ['ninguna'], objetivos: ['vivienda'], o_vivienda_importe: 30000, o_vivienda_plazo: 4,
   preocupacion: 'vivienda', horario: ['mananas', 'tardes']
 };
 
@@ -114,20 +114,25 @@ describe('Indicador: endeudamiento (≤30 % verde · 30-40 % ámbar · >40 % roj
 });
 
 describe('Indicador: colchón de emergencia (≥6 meses verde · 3-6 ámbar · <3 rojo)', () => {
-  // gastos 1.000 €/mes; líquido por tramo (punto medio): lt3=1.500, 3-10=6.500
-  const A = (tramo, gastos) => base({ gOtrosFijos: gastos, savCuentas: tramo });
-  it('6,5 meses → verde', () => assert.equal(ind(A('3-10', 1000), 'colchon').estado, 'verde'));
-  it('exactamente 6 meses → verde', () => assert.equal(ind(base({ gOtrosFijos: 1000, ahorroDisponible: 'gt150' }), 'colchon').estado, 'verde'));
-  it('3,25 meses → ámbar', () => assert.equal(ind(A('3-10', 2000), 'colchon').estado, 'ambar'));
-  it('1,5 meses → rojo', () => assert.equal(ind(A('lt3', 1000), 'colchon').estado, 'rojo'));
+  // líquido en cuentas / gastos del mes
+  const A = (cuentas, gastos) => base({ gOtrosFijos: gastos, savCuentas: cuentas });
+  it('6,5 meses → verde', () => assert.equal(ind(A(6500, 1000), 'colchon').estado, 'verde'));
+  it('exactamente 6 meses → verde', () => assert.equal(ind(base({ gOtrosFijos: 1000, ahorroDisponible: 6000 }), 'colchon').estado, 'verde'));
+  it('3,25 meses → ámbar', () => assert.equal(ind(A(6500, 2000), 'colchon').estado, 'ambar'));
+  it('1,5 meses → rojo', () => assert.equal(ind(A(1500, 1000), 'colchon').estado, 'rojo'));
   it('en Exprés usa "dinero disponible en cuentas y depósitos"', () => {
     const i = ind(EXPRES, 'colchon');
     assert.equal(i.estado, 'ambar'); // 6.500 / 1.370 = 4,7 meses
     assert.match(i.valor, /^4,7 meses$/);
   });
-  it('umbral exacto 3 meses → ámbar (límites configurables)', () => {
-    const { PA: P2 } = cargar((C) => { C.tramos.ahorro.push(['x', 'x', 3000]); });
-    assert.equal(P2.indicadores(base({ gOtrosFijos: 1000, savCuentas: 'x' })).find((i) => i.id === 'colchon').estado, 'ambar');
+  it('umbral exacto 3 meses → ámbar; 2.999 € → rojo', () => {
+    assert.equal(ind(A(3000, 1000), 'colchon').estado, 'ambar');
+    assert.equal(ind(A(2999, 1000), 'colchon').estado, 'rojo');
+  });
+  it('cuentas y depósitos suman; 0 € cuenta como dato (no como vacío)', () => {
+    assert.equal(PA.calculos(base({ savCuentas: 2000, savDepositos: 4000 })).liquido, 6000);
+    assert.equal(ind(base({ gOtrosFijos: 1000, savCuentas: 0 }), 'colchon').estado, 'rojo');
+    assert.equal(ind(base({ gOtrosFijos: 1000, savCuentas: 'pnd' }), 'colchon').estado, 'na');
   });
 });
 
@@ -173,29 +178,29 @@ describe('Indicador: protección familiar', () => {
 });
 
 describe('Indicador: jubilación', () => {
-  const J = (extra) => base(Object.assign({ edad: '45-54', laboral: 'asalariado', savCuentas: 'nada', savFondos: 'nada', savPlanes: 'nada' }, extra));
+  const J = (extra) => base(Object.assign({ edad: 50, laboral: 'asalariado', savCuentas: 0, savFondos: 0, savPlanes: 0 }, extra));
   it('50 años con 2 años de ingresos ahorrados a largo plazo → verde', () => {
     // objetivo = 2 × 12.000 = 24.000; planes 10-30 → 20.000 (0,83) + fondos lt3 1.500 + acciones 3-10 6.500 = 28.000 → ≥1
-    assert.equal(ind(J({ savPlanes: '10-30', savFondos: 'lt3', savAcciones: '3-10' }), 'jubilacion').estado, 'verde');
+    assert.equal(ind(J({ savPlanes: 20000, savFondos: 1500, savAcciones: 6500 }), 'jubilacion').estado, 'verde');
   });
-  it('a mitad de camino → ámbar', () => assert.equal(ind(J({ savPlanes: '10-30' }), 'jubilacion').estado, 'ambar'));
+  it('a mitad de camino → ámbar', () => assert.equal(ind(J({ savPlanes: 20000 }), 'jubilacion').estado, 'ambar'));
   it('sin ahorro a largo plazo → rojo', () => assert.equal(ind(J({}), 'jubilacion').estado, 'rojo'));
   it('pocos años cotizados baja un nivel', () => {
-    assert.equal(ind(J({ savPlanes: '10-30', savFondos: 'lt3', savAcciones: '3-10', anosCotizados: 10, edadJubilacion: 67 }), 'jubilacion').estado, 'ambar');
+    assert.equal(ind(J({ savPlanes: 20000, savFondos: 1500, savAcciones: 6500, anosCotizados: 10, edadJubilacion: 67 }), 'jubilacion').estado, 'ambar');
   });
-  it('jubilado/a → dato informativo', () => assert.equal(ind(base({ laboral: 'jubilado', edad: '65+', savCuentas: 'lt3' }), 'jubilacion').estado, 'info'));
-  it('menor de 25 con hábito de ahorro → verde', () => assert.equal(ind(base({ edad: '18-24', savCuentas: 'lt3', ahorroMensual: 150 }), 'jubilacion').estado, 'verde'));
+  it('jubilado/a → dato informativo', () => assert.equal(ind(base({ laboral: 'jubilado', edad: 68, savCuentas: 1500 }), 'jubilacion').estado, 'info'));
+  it('menor de 25 con hábito de ahorro → verde', () => assert.equal(ind(base({ edad: 21, savCuentas: 1500, ahorroMensual: 150 }), 'jubilacion').estado, 'verde'));
 });
 
 describe('Indicador: diversificación', () => {
-  it('todo en cuentas (≥85 %) → rojo', () => assert.equal(ind(base({ savCuentas: '30-60' }), 'diversificacion').estado, 'rojo'));
-  it('bien repartido → verde', () => assert.equal(ind(base({ savCuentas: '10-30', savFondos: '10-30', savPlanes: '10-30' }), 'diversificacion').estado, 'verde'));
-  it('un solo producto no líquido (≥90 %) → rojo', () => assert.equal(ind(base({ savFondos: '60-150', savCuentas: 'lt3' }), 'diversificacion').estado, 'rojo'));
-  it('poco ahorro (<10.000 €) → informativo, sin semáforo', () => assert.equal(ind(base({ savCuentas: '3-10' }), 'diversificacion').estado, 'info'));
+  it('todo en cuentas (≥85 %) → rojo', () => assert.equal(ind(base({ savCuentas: 45000 }), 'diversificacion').estado, 'rojo'));
+  it('bien repartido → verde', () => assert.equal(ind(base({ savCuentas: 20000, savFondos: 20000, savPlanes: 20000 }), 'diversificacion').estado, 'verde'));
+  it('un solo producto no líquido (≥90 %) → rojo', () => assert.equal(ind(base({ savFondos: 105000, savCuentas: 1500 }), 'diversificacion').estado, 'rojo'));
+  it('poco ahorro (<10.000 €) → informativo, sin semáforo', () => assert.equal(ind(base({ savCuentas: 6500 }), 'diversificacion').estado, 'info'));
 });
 
 describe('Indicador: viabilidad de objetivos (necesario/capacidad ≤1 verde · ≤1,5 ámbar · >1,5 rojo)', () => {
-  const O = (imp, ahorro) => base({ ahorroMensual: ahorro, objetivos: ['vivienda'], o_vivienda_importe: imp, o_vivienda_plazo: '1-3' }); // 24 meses
+  const O = (imp, ahorro) => base({ ahorroMensual: ahorro, objetivos: ['vivienda'], o_vivienda_importe: imp, o_vivienda_plazo: 2 }); // 24 meses
   it('2.400 € en 2 años con 100 €/mes → verde', () => assert.equal(ind(O(2400, 100), 'objetivos').estado, 'verde'));
   it('3.600 € con 100 €/mes → ámbar', () => assert.equal(ind(O(3600, 100), 'objetivos').estado, 'ambar'));
   it('3.700 € con 100 €/mes → rojo', () => assert.equal(ind(O(3700, 100), 'objetivos').estado, 'rojo'));
@@ -269,6 +274,44 @@ describe('Preguntas condicionales y modalidades', () => {
     for (const f of Object.values(PA.CAMPOS)) {
       assert.ok(!prohibido.test(f.k), 'clave ' + f.k);
       if (f.label) assert.ok(!prohibido.test(f.label), 'pregunta: ' + f.label);
+    }
+  });
+});
+
+describe('Versión 2: cifras exactas', () => {
+  const texto = (A, modo) => PA.textoResumen(A, modo || 'full', { fecha: FECHA }).completo.replace(/ /g, ' ');
+  it('edad exacta del titular, de la pareja y de los hijos (incluido un bebé de 0 años)', () => {
+    const t = texto(FAMILIA);
+    assert.match(t, /Edad: 40 años · Hogar: 4 personas/);
+    assert.match(t, /Pareja: sí \(38 años\) · Hijos a cargo: 2 \(9 y 14 años\)/);
+    assert.match(texto(base({ hijos: '3', hijoEdad1: 0, hijoEdad2: 4, hijoEdad3: 7 })), /Hijos a cargo: 3 \(0, 4 y 7 años\)/);
+  });
+  it('la edad exacta se usa en la jubilación (años que faltan)', () => {
+    const i = ind(base({ edad: 47, laboral: 'asalariado', savPlanes: 30000, edadJubilacion: 65 }), 'jubilacion');
+    assert.equal(i.valor, '18 años por delante');
+  });
+  it('ahorro, inmuebles y plazos en importes y años exactos', () => {
+    const t = texto(FAMILIA);
+    assert.match(t, /• Ahorro acumulado: 28\.000 €\n {2}\(Cuentas 20\.000, Fondos 1\.500, Planes de pensiones 6\.500\)/);
+    assert.match(t, /• Vivienda: 250\.000 €/);
+    assert.match(t, /Colchón de emergencia: 10\.000 € en 2 años/);
+    assert.match(t, /Estudios de los hijos: 20\.000 € en 15 años/);
+    assert.match(texto(Object.assign({}, EXPRES), 'express'), /Disponible en cuentas y depósitos: 6\.500 €/);
+  });
+  it('"Prefiero no decirlo" en el valor de la vivienda → patrimonio sin calcular', () => {
+    assert.equal(ind(Object.assign({}, FAMILIA, { valorVivienda: 'pnd' }), 'patrimonio').estado, 'na');
+  });
+  it('validación de edades y plazos fuera de rango', () => {
+    const perfil = PA.BLOQUES.find((b) => b.id === 'perfil');
+    assert.equal(PA.validarBloque(perfil, { edad: 15 }, 'full')[0].k, 'edad');
+    assert.equal(PA.validarBloque(perfil, { edad: 41, hijos: '1', hijoEdad1: 45 }, 'full')[0].k, 'hijoEdad1');
+    assert.equal(PA.validarBloque(perfil, { edad: 41, pareja: 'si', edadPareja: 39, hijos: '1', hijoEdad1: 0 }, 'full').length, 0);
+    const obj = PA.BLOQUES.find((b) => b.id === 'objetivos');
+    assert.equal(PA.validarBloque(obj, { objetivos: ['vivienda'], o_vivienda_plazo: 0 }, 'full').length, 1);
+  });
+  it('ya no quedan preguntas por tramos de cifras', () => {
+    for (const f of Object.values(PA.CAMPOS)) {
+      if (/^(edad|edadPareja|hijoEdad\d|sav\w+|ahorroDisponible|valorVivienda|valorOtros|o_\w+_plazo)$/.test(f.k)) assert.ok(f.t === 'money' || f.t === 'int', f.k + ' es ' + f.t);
     }
   });
 });
