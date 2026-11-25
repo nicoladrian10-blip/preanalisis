@@ -12,13 +12,13 @@ Registro de lo que decidí sin preguntarte, para que puedas revisarlo o cambiarl
 
 ## Contenido y flujo
 - **Orden de modalidades:** «Completo (recomendado)» aparece primero.
-- **Exprés incluye además** (1) «Dinero disponible en cuentas y depósitos» (un tramo) para poder calcular el colchón de emergencia, y (2) el bloque final (preocupación y horario), necesario para agendar la reunión. Sigue siendo de 7 pantallas cortas.
+- **Exprés incluye además** (1) «Dinero disponible en cuentas y depósitos» (importe en €) para poder calcular el colchón de emergencia, y (2) el bloque final (preocupación y horario), necesario para agendar la reunión. Sigue siendo de 7 pantallas cortas.
 - **Vivienda habitual** se pregunta en Perfil porque decide qué aparece después (alquiler, cuota hipotecaria, valor de la vivienda, detalles de la hipoteca).
 - **La cuota de la hipoteca se pregunta una sola vez**, en Gastos fijos, y se reutiliza en Deudas, así no se cuenta dos veces.
 - **Pagas extra:** se pregunta el número de pagas solo a asalariados, funcionarios y jubilados. Los ingresos se prorratean (`nómina × pagas / 12`).
 - **Respuestas ocultas por condicionales** (por ejemplo, si cambia de «hipoteca» a «alquiler») se ignoran en cálculos y en el resumen, aunque sigan guardadas.
 - **Único requisito obligatorio:** al menos un ingreso (o marcar «Prefiero no decirlo»). Todo lo demás es opcional.
-- **«Prefiero no decirlo»** en ingresos, ahorro mensual, capitales pendientes de deudas y todos los tramos de patrimonio y ahorro.
+- **«Prefiero no decirlo»** en ingresos, ahorro mensual, capitales pendientes de deudas ahorro acumulado por producto y valor de los inmuebles.
 - **Capital asegurado** se pide para vida, hogar, decesos y ahorro, no para salud (no aplica).
 - **Hijos:** se pide la edad de hasta 4 hijos. «Estudios de los hijos» solo aparece como objetivo si hay hijos.
 - **Texto libre:** «Otro objetivo» (60 caracteres) y comentario final (200 caracteres), con aviso y detección automática de email, teléfono, DNI o IBAN.
@@ -26,15 +26,15 @@ Registro de lo que decidí sin preguntarte, para que puedas revisarlo o cambiarl
 - **Modo demostración** `?demo=completo` / `?demo=expres` con datos ficticios, para que puedas enseñar el resultado o revisarlo sin rellenar nada.
 
 ## Cálculos (orientativos, todo editable en `CONFIG`)
-- **Tramos → punto medio:** p. ej. 10.000-30.000 € → 20.000 €; «Más de 150.000 €» → 200.000 €; «Más de 1 M€» → 1.200.000 €.
+- **Versión 2 (cifras exactas, decidido contigo el 25/11/2026):** edad exacta del titular, de la pareja (nueva pregunta) y de cada hijo (0 si tiene menos de un año); ahorro acumulado en € por producto (con total en vivo); valor de vivienda y otros inmuebles en €; plazo de cada objetivo en años; «dinero disponible» del Exprés en €. Ya no hay puntos medios de tramo: los cálculos usan las cifras tal cual. Un producto de ahorro vacío no suma (no se sabe); un 0 sí cuenta como dato.
 - **Gastos del mes** = fijos + variables + cuotas de préstamos distintos de la hipoteca (la hipoteca ya está en fijos).
 - **Ahorro mensual:** si no lo indica, se usa ingresos − gastos y se marca como «estimado».
-- **Colchón:** cuentas + depósitos (o el tramo de «dinero disponible» en Exprés) / gastos del mes.
+- **Colchón:** cuentas + depósitos (o el «dinero disponible» en Exprés) / gastos del mes.
 - **Patrimonio neto:** solo se muestra si no falta el valor de la vivienda cuando es propietario (para no dar una cifra engañosa).
 - **Protección familiar:** «personas a cargo» = hijos o pareja sin ingresos. Rojo si hay personas a cargo o hipoteca y no tiene seguro de vida. Ámbar si «no lo sabe» o si el capital indicado es menor que deudas + 3 años de ingresos.
 - **Jubilación:** compara el ahorro a largo plazo (fondos, planes, acciones y seguros de ahorro) con una referencia por edad en veces los ingresos anuales (30 años: 0,25×; 40: 1×; 50: 2×; 60: 3×; 67: 4×). Es más baja que las reglas anglosajonas porque en España hay pensión pública. Baja un nivel si los años cotizados previstos no llegan a 37. Para jubilados es un dato informativo. Menores de 25: se valora el hábito de ahorro.
 - **Diversificación:** sin semáforo por debajo de 10.000 € (tenerlo en cuenta es razonable). Rojo con ≥85 % en cuentas y depósitos o ≥90 % en un producto. Ámbar con ≥60 %.
-- **Viabilidad de objetivos:** Σ importe / meses de plazo (punto medio del tramo), comparado con el ahorro mensual.
+- **Viabilidad de objetivos:** Σ importe / (años de plazo × 12), comparado con el ahorro mensual.
 - **Perfil de riesgo:** 4 preguntas de 1 a 3 puntos → 4-6 conservador, 7-9 moderado, 10-12 dinámico. Con 2-3 respuestas se escala.
 - **Indicadores sin datos** se agrupan en una tarjeta «Pendientes de calcular» en lugar de mostrar semáforos vacíos.
 

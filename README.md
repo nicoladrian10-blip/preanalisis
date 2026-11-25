@@ -37,14 +37,14 @@ https://nicoladrian10-blip.github.io/preanalisis/?asesor=34611222333&nombreAseso
 
 Si `asesor` no es válido, se usa tu número de `CONFIG` (o, si está vacío, WhatsApp pide elegir el contacto). El logo sigue siendo el tuyo. Si otro asesor quiere su propio logo, se duplica el repositorio (sección 4).
 
-## 3. Cambiar umbrales, textos o tramos
+## 3. Cambiar umbrales, textos o límites
 
 Todo está en `CONFIG`, dentro de `index.html`:
 
 - `CONFIG.umbrales`: semáforos (tasa de ahorro, endeudamiento, colchón, jubilación, diversificación, objetivos, protección).
 - `CONFIG.textos`: portada, aviso de privacidad, mensaje de modalidad, aviso «orientativo», etc.
 - `CONFIG.frases`: la frase que acompaña a cada indicador según su color y el resumen global.
-- `CONFIG.tramos`: tramos de edad, ahorro, inmuebles y plazos, con el punto medio que se usa en los cálculos.
+- `CONFIG.limites`: edades y plazos admitidos (la v2 pide cifras exactas: edad, ahorro por producto, valor de inmuebles y plazos en años).
 - `CONFIG.whatsapp`: longitud objetivo del mensaje y límite seguro del enlace.
 
 Las preguntas están en el bloque `<script id="logica">`, sección «Preguntas por bloques».

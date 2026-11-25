@@ -276,7 +276,7 @@ dialog .btn-row{margin-top:20px}
 
 <!-- =====================================================================
      CONFIG · Todo lo que se puede editar sin tocar el resto del código:
-     número y nombre del asesor, textos, umbrales de los semáforos y tramos.
+     número y nombre del asesor, textos, umbrales de los semáforos y límites.
      ===================================================================== -->
 <script id="config">
 var CONFIG = {
@@ -319,15 +319,8 @@ var CONFIG = {
     objetivos:     { verde: 1, ambar: 1.5 }        // ahorro necesario / capacidad: ≤1 verde · ≤1,5 ámbar · >1,5 rojo
   },
 
-  // Tramos: [valor interno, texto, punto medio usado en los cálculos]
-  tramos: {
-    edad: [['18-24', '18-24', 21], ['25-34', '25-34', 30], ['35-44', '35-44', 40], ['45-54', '45-54', 50], ['55-64', '55-64', 60], ['65+', '65 o más', 68]],
-    ahorro: [['nada', 'Nada', 0], ['lt3', 'Menos de 3.000 €', 1500], ['3-10', '3.000-10.000 €', 6500], ['10-30', '10.000-30.000 €', 20000],
-             ['30-60', '30.000-60.000 €', 45000], ['60-150', '60.000-150.000 €', 105000], ['gt150', 'Más de 150.000 €', 200000]],
-    inmueble: [['lt100', 'Menos de 100.000 €', 75000], ['100-200', '100.000-200.000 €', 150000], ['200-300', '200.000-300.000 €', 250000],
-               ['300-500', '300.000-500.000 €', 400000], ['500-1000', '500.000-1.000.000 €', 750000], ['gt1000', 'Más de 1.000.000 €', 1200000]],
-    plazo: [['lt1', 'Menos de 1 año', 1], ['1-3', '1-3 años', 2], ['3-5', '3-5 años', 4], ['5-10', '5-10 años', 7.5], ['10-20', '10-20 años', 15], ['gt20', 'Más de 20 años', 25]]
-  },
+  // Límites de los campos numéricos (edad en años, plazos en años)
+  limites: { edadMin: 18, edadMax: 99, edadHijoMax: 40, plazoMax: 50 },
 
   edadJubilacionPorDefecto: 67,
 
@@ -343,7 +336,7 @@ var CONFIG = {
     tasaAhorro: { verde: 'Ahorras una buena parte de lo que ingresas. ¡Buen hábito!', ambar: 'Ahorras, aunque hay margen para apartar algo más cada mes.', rojo: 'Ahora mismo ahorras poco en relación con tus ingresos.' },
     endeudamiento: { sinDeudas: 'No tienes cuotas de deuda. ¡Estupendo!', verde: 'Tus cuotas de deuda están en un nivel cómodo.', ambar: 'Tus cuotas se acercan al límite recomendable.', rojo: 'Las cuotas se llevan una parte alta de tus ingresos.' },
     colchon: { verde: 'Tienes un buen colchón para imprevistos.', ambar: 'Tienes algo de colchón; lo ideal es llegar a 6 meses de gastos.', rojo: 'Tu colchón para imprevistos todavía es pequeño.' },
-    patrimonio: { info: 'Estimación con el punto medio de cada tramo, menos lo que debes.' },
+    patrimonio: { info: 'Lo que tienes (ahorro e inmuebles) menos lo que debes.' },
     proteccion: { verde: 'Tienes seguro de vida para proteger a los tuyos.', sinCargas: 'Sin personas a cargo ni hipoteca, tu necesidad de seguro de vida es baja.', ambar: 'Tienes seguro de vida, pero el capital podría quedarse corto.', nose: 'No tienes claro si tienes seguro de vida: conviene revisarlo.', rojo: 'Tienes personas a cargo o hipoteca y no tienes seguro de vida.' },
     jubilacion: { verde: 'Vas por buen camino para tu jubilación.', ambar: 'Vas avanzando, pero conviene reforzar el ahorro para la jubilación.', rojo: 'Tu ahorro para la jubilación va por detrás de lo orientativo para tu edad.', joven: 'Tienes el tiempo a tu favor: empezar pronto marca la diferencia.', jovenPoco: 'Tienes tiempo, pero conviene empezar a crear el hábito de ahorro.', jubilado: 'Ya estás jubilado/a: veremos cómo complementar tu pensión.', cotizacion: 'Con los años cotizados previstos podrías no llegar a la pensión completa.' },
     diversificacion: { verde: 'Tu ahorro está repartido entre varios tipos de producto.', ambar: 'Buena parte de tu ahorro está en un solo tipo de producto.', rojo: 'Casi todo tu ahorro está en cuentas o en un único producto.', poco: 'Con este nivel de ahorro, tenerlo disponible en cuenta es razonable.', nada: 'Aún no hay ahorro acumulado que repartir.' },
@@ -397,15 +390,12 @@ var PA = (function (C) {
   }
 
   // ---------- Opciones ----------
-  function opcionesTramo(lista) { return lista.map(function (t) { return [t[0], t[1]]; }); }
-  function medio(lista, v) { for (var i = 0; i < lista.length; i++) if (lista[i][0] === v) return lista[i][2]; return null; }
   function etiqueta(lista, v) { for (var i = 0; i < lista.length; i++) if (lista[i][0] === v) return lista[i][1]; return null; }
 
   var SI_NO = [['si', 'Sí'], ['no', 'No']];
   var LABORAL = [['asalariado', 'Asalariado/a'], ['funcionario', 'Funcionario/a'], ['autonomo', 'Autónomo/a'], ['desempleado', 'En desempleo'], ['jubilado', 'Jubilado/a'], ['otro', 'Otra situación']];
   var PAGAS = [['12', '12'], ['14', '14'], ['15', '15 o más']];
   var VIVIENDA = [['hipoteca', 'En propiedad, con hipoteca'], ['propiedad', 'En propiedad, sin hipoteca'], ['alquiler', 'De alquiler'], ['familiar', 'Cedida o de familiares']];
-  var EDAD_HIJOS = [['0-5', '0-5'], ['6-11', '6-11'], ['12-17', '12-17'], ['18+', '18 o más']];
   var DEUDAS = [['hip2', 'Hipoteca de otro inmueble'], ['personal', 'Préstamo personal'], ['coche', 'Préstamo o financiación del coche'], ['tarjetas', 'Tarjetas o compras aplazadas'], ['ninguna', 'Ninguna']];
   var SEGUROS = [['vida', 'Seguro de vida', 'Incluido el vinculado a la hipoteca.'], ['salud', 'Seguro de salud'], ['hogar', 'Seguro de hogar'], ['decesos', 'Seguro de decesos'], ['ahorro', 'Seguro de ahorro o jubilación', 'PIAS, SIALP, unit linked, plan de previsión asegurado…']];
   var OBJETIVOS = [['vivienda', 'Comprar o cambiar de vivienda'], ['estudios', 'Estudios de los hijos', function (A) { return nHijos(A) > 0; }], ['jubilacion', 'Complementar la jubilación'], ['colchon', 'Colchón de emergencia'], ['invertir', 'Invertir o hacer crecer mi dinero'], ['deudas', 'Reducir o cancelar deudas'], ['otro', 'Otro']];
@@ -435,12 +425,13 @@ var PA = (function (C) {
   var bloques = [];
 
   bloques.push({ id: 'perfil', titulo: 'Tu perfil', intro: 'Unas preguntas rápidas sobre ti y tu hogar. No te pedimos nombre ni datos personales.', exp: true, campos: [
-    campo({ k: 'edad', t: 'chips', label: 'Tu edad', opts: opcionesTramo(C.tramos.edad), exp: true }),
+    campo({ k: 'edad', t: 'int', label: 'Tu edad', suf: 'años', min: C.limites.edadMin, max: C.limites.edadMax, exp: true }),
     campo({ k: 'pareja', t: 'chips', label: '¿Vives en pareja?', opts: SI_NO, exp: true }),
+    campo({ k: 'edadPareja', t: 'int', label: 'Edad de tu pareja', suf: 'años', min: C.limites.edadMin, max: C.limites.edadMax, exp: true, vis: conPareja }),
     campo({ k: 'hogar', t: 'chips', label: 'Personas que viven en casa (contándote a ti)', opts: [['1', '1'], ['2', '2'], ['3', '3'], ['4', '4'], ['5', '5'], ['6+', '6 o más']], exp: true }),
     campo({ k: 'hijos', t: 'chips', label: 'Hijos a tu cargo', opts: [['0', 'Ninguno'], ['1', '1'], ['2', '2'], ['3', '3'], ['4+', '4 o más']], exp: true })
   ].concat([1, 2, 3, 4].map(function (i) {
-    return campo({ k: 'hijoEdad' + i, t: 'chips', label: 'Edad del hijo/a ' + i, opts: EDAD_HIJOS, exp: true, vis: function (A) { return nHijos(A) >= i; } });
+    return campo({ k: 'hijoEdad' + i, t: 'int', label: 'Edad del hijo/a ' + i, hint: i === 1 ? 'Si tiene menos de un año, pon 0.' : '', suf: 'años', min: 0, max: C.limites.edadHijoMax, exp: true, vis: function (A) { return nHijos(A) >= i; } });
   })).concat([
     campo({ k: 'laboral', t: 'chips', label: 'Tu situación laboral', opts: LABORAL, exp: true }),
     campo({ k: 'laboralPareja', t: 'chips', label: 'Situación laboral de tu pareja', opts: LABORAL, exp: true, vis: conPareja }),
@@ -476,11 +467,12 @@ var PA = (function (C) {
     campo({ k: 'gVariables', t: 'money', label: 'Gastos variables al mes', hint: 'Comida, ocio, ropa, regalos, imprevistos…', exp: true }),
     campo({ k: '_referencia', t: 'info', fn: 'referencia', exp: true }),
     campo({ k: 'ahorroMensual', t: 'money', label: '¿Cuánto ahorras de verdad al mes?', hint: 'Lo que realmente te sobra o apartas. Si no lo sabes, déjalo vacío y usaré el dato calculado.', pnd: true, exp: true }),
-    campo({ k: 'ahorroDisponible', t: 'select', label: 'Dinero disponible ahora en cuentas y depósitos', hint: 'Tramo aproximado.', opts: opcionesTramo(C.tramos.ahorro).concat([PND]), exp: true, soloExpres: true })
+    campo({ k: 'ahorroDisponible', t: 'money', label: 'Dinero disponible ahora en cuentas y depósitos', hint: 'Lo que podrías usar ya si surgiera un imprevisto. Una cifra aproximada vale.', pnd: true, exp: true, soloExpres: true })
   ] });
 
-  bloques.push({ id: 'ahorro-acumulado', titulo: 'Ahorro acumulado', intro: 'Elige el tramo aproximado de cada producto (sumando el de tu pareja si compartís finanzas).', exp: false, campos:
-    PRODUCTOS.map(function (p) { return campo({ k: p[0], t: 'select', label: p[1], hint: p[0] === 'savOtros' ? 'Criptomonedas, oro, préstamos a terceros…' : '', opts: opcionesTramo(C.tramos.ahorro).concat([PND]) }); })
+  bloques.push({ id: 'ahorro-acumulado', titulo: 'Ahorro acumulado', intro: 'Importe aproximado en cada producto (sumando el de tu pareja si compartís finanzas). Si no tienes, pon 0 o déjalo vacío.', exp: false, campos:
+    PRODUCTOS.map(function (p) { return campo({ k: p[0], t: 'money', label: p[1], hint: p[0] === 'savOtros' ? 'Criptomonedas, oro, préstamos a terceros…' : '', pnd: true }); })
+      .concat([campo({ k: '_totalAhorro', t: 'info', fn: 'totalAhorro' })])
   });
 
   bloques.push({ id: 'deudas', titulo: 'Deudas', intro: 'Lo que queda por pagar y la cuota de cada mes.', exp: true, campos: [
@@ -497,9 +489,9 @@ var PA = (function (C) {
   }, [])) });
 
   bloques.push({ id: 'inmuebles', titulo: 'Vivienda y patrimonio', intro: 'Valores aproximados de mercado (lo que te darían hoy).', exp: false, campos: [
-    campo({ k: 'valorVivienda', t: 'select', label: 'Valor aproximado de tu vivienda', opts: opcionesTramo(C.tramos.inmueble).concat([PND]), vis: propietario }),
+    campo({ k: 'valorVivienda', t: 'money', label: 'Valor aproximado de tu vivienda', hint: 'Lo que te darían hoy si la vendieras. Una estimación vale.', pnd: true, vis: propietario }),
     campo({ k: 'otrosInmuebles', t: 'chips', label: '¿Tienes otros inmuebles?', hint: 'Segunda vivienda, local, garaje, terreno…', opts: SI_NO }),
-    campo({ k: 'valorOtros', t: 'select', label: 'Valor aproximado de los otros inmuebles (en total)', opts: opcionesTramo(C.tramos.inmueble).concat([PND]), vis: function (A) { return A.otrosInmuebles === 'si'; } })
+    campo({ k: 'valorOtros', t: 'money', label: 'Valor aproximado de los otros inmuebles (en total)', pnd: true, vis: function (A) { return A.otrosInmuebles === 'si'; } })
   ] });
 
   bloques.push({ id: 'proteccion', titulo: 'Protección', intro: 'Seguros que ya tienes. Si no sabes algún importe, déjalo vacío.', exp: false, campos:
@@ -523,7 +515,7 @@ var PA = (function (C) {
     var vis = function (A) { return marcado(A, 'objetivos', o[0]) && (!o[2] || o[2](A)); };
     if (o[0] === 'otro') acc.push(campo({ k: 'o_otro_texto', t: 'text', label: '¿Cuál?', maxlength: 60, hint: 'Breve y sin datos personales.', exp: true, vis: vis, group: o[1] }));
     acc.push(campo({ k: 'o_' + o[0] + '_importe', t: 'money', label: o[0] === 'deudas' ? 'Importe que quieres cancelar' : 'Importe aproximado', exp: true, vis: vis, group: o[1] }));
-    acc.push(campo({ k: 'o_' + o[0] + '_plazo', t: 'select', label: '¿En cuánto tiempo?', opts: opcionesTramo(C.tramos.plazo), exp: true, vis: vis, group: o[1] }));
+    acc.push(campo({ k: 'o_' + o[0] + '_plazo', t: 'int', label: '¿En cuántos años?', suf: 'años', min: 1, max: C.limites.plazoMax, exp: true, vis: vis, group: o[1] }));
     return acc;
   }, [])) });
 
@@ -610,13 +602,12 @@ var PA = (function (C) {
     var ahorro = num(E.ahorroMensual), ahorroEstimado = false;
     if (ahorro === null && referencia !== null) { ahorro = referencia; ahorroEstimado = true; }
 
-    // Ahorro acumulado (punto medio del tramo)
-    var tA = C.tramos.ahorro;
+    // Ahorro acumulado (importes exactos; los productos sin responder no suman)
     var productos = {}, totalAhorro = null;
-    PRODUCTOS.forEach(function (pr) { var m = medio(tA, E[pr[0]]); if (m !== null) { productos[pr[0]] = m; totalAhorro = (totalAhorro || 0) + m; } });
+    PRODUCTOS.forEach(function (pr) { var m = num(E[pr[0]]); if (m !== null) { productos[pr[0]] = m; totalAhorro = (totalAhorro || 0) + m; } });
     var liquido = null;
     if (productos.savCuentas !== undefined || productos.savDepositos !== undefined) liquido = (productos.savCuentas || 0) + (productos.savDepositos || 0);
-    else if (medio(tA, E.ahorroDisponible) !== null) liquido = medio(tA, E.ahorroDisponible);
+    else if (num(E.ahorroDisponible) !== null) liquido = num(E.ahorroDisponible);
 
     // Deudas pendientes
     var pendHip = num(E.hipPendiente);
@@ -668,10 +659,10 @@ var PA = (function (C) {
     } else out.push(na('colchon', 'Colchón de emergencia'));
 
     // 4. Patrimonio neto aproximado (sin semáforo)
-    var vViv = medio(C.tramos.inmueble, E.valorVivienda), vOtros = medio(C.tramos.inmueble, E.valorOtros);
+    var vViv = num(E.valorVivienda), vOtros = num(E.valorOtros);
     var capAhorroSeg = num(E.seg_ahorro_capital);
     var activos = null;
-    [c.totalAhorro !== null ? c.totalAhorro : (medio(C.tramos.ahorro, E.ahorroDisponible)), vViv, vOtros, capAhorroSeg].forEach(function (v) { if (v !== null && v !== undefined) activos = (activos || 0) + v; });
+    [c.totalAhorro !== null ? c.totalAhorro : num(E.ahorroDisponible), vViv, vOtros, capAhorroSeg].forEach(function (v) { if (v !== null && v !== undefined) activos = (activos || 0) + v; });
     var faltaVivienda = propietario(E) && vViv === null;
     var faltaOtros = E.otrosInmuebles === 'si' && vOtros === null;
     if (activos !== null && !faltaVivienda && !faltaOtros) {
@@ -705,7 +696,7 @@ var PA = (function (C) {
     }
 
     // 6. Preparación para la jubilación
-    var edad = medio(C.tramos.edad, E.edad);
+    var edad = num(E.edad);
     if (E.laboral === 'jubilado') {
       out.push({ id: 'jubilacion', titulo: 'Preparación para la jubilación', estado: 'info', valor: 'Ya jubilado/a', corto: 'ya jubilado/a', frase: F.jubilacion.jubilado });
     } else if (edad !== null && I && I > 0 && c.totalAhorro !== null) {
@@ -745,7 +736,7 @@ var PA = (function (C) {
     // 8. Viabilidad de objetivos
     var necesario = 0, conDatos = 0;
     (E.objetivos || []).forEach(function (o) {
-      var imp = num(E['o_' + o + '_importe']), anos = medio(C.tramos.plazo, E['o_' + o + '_plazo']);
+      var imp = num(E['o_' + o + '_importe']), anos = num(E['o_' + o + '_plazo']);
       if (imp && anos) { necesario += imp / (anos * 12); conDatos++; }
     });
     if (conDatos && c.ahorro !== null) {
@@ -805,9 +796,11 @@ var PA = (function (C) {
     if (g.rojos + g.ambar + g.verdes) add(si, 'Resumen: ' + g.texto, 2);
 
     var sp = sec('Perfil');
-    add(sp, vi(unir([E.edad && 'Edad: ' + lab(C.tramos.edad, E.edad) + ' años', E.hogar && 'Hogar: ' + E.hogar + (E.hogar === '1' ? ' persona' : ' personas')])), 1);
-    var edades = [1, 2, 3, 4].map(function (i) { return E['hijoEdad' + i]; }).filter(Boolean).map(function (v) { return v.replace(' años', ''); });
-    add(sp, vi(unir([E.pareja && 'Pareja: ' + (E.pareja === 'si' ? 'sí' : 'no'), E.hijos && 'Hijos a cargo: ' + (E.hijos === '0' ? 'ninguno' : E.hijos + (edades.length ? ' (' + edades.join(', ') + ' años)' : ''))])), 1);
+    add(sp, vi(unir([num(E.edad) !== null && 'Edad: ' + E.edad + ' años', E.hogar && 'Hogar: ' + E.hogar + (E.hogar === '1' ? ' persona' : ' personas')])), 1);
+    var edades = [1, 2, 3, 4].map(function (i) { return num(E['hijoEdad' + i]); }).filter(function (v) { return v !== null; });
+    var listaEdades = edades.length > 1 ? edades.slice(0, -1).join(', ') + ' y ' + edades[edades.length - 1] : String(edades[0]);
+    add(sp, vi(unir([E.pareja && 'Pareja: ' + (E.pareja === 'si' ? 'sí' + (num(E.edadPareja) !== null ? ' (' + E.edadPareja + ' años)' : '') : 'no'),
+      E.hijos && 'Hijos a cargo: ' + (E.hijos === '0' ? 'ninguno' : E.hijos + (edades.length ? ' (' + listaEdades + (edades.length === 1 && edades[0] === 1 ? ' año)' : ' años)') : ''))])), 1);
     add(sp, vi(unir([E.laboral && 'Trabajo: ' + lab(LABORAL, E.laboral), E.laboralPareja && 'Pareja: ' + lab(LABORAL, E.laboralPareja)])), 1);
     add(sp, vi(E.vivienda && 'Vivienda: ' + lab(VIVIENDA, E.vivienda).toLowerCase()), 1);
 
@@ -828,10 +821,12 @@ var PA = (function (C) {
     var sa = sec('Ahorro');
     if (num(E.ahorroMensual) !== null) add(sa, '• Ahorro mensual: ' + eur(E.ahorroMensual) + (c.referencia !== null ? ' (calculado: ' + eur(c.referencia) + ')' : ''), 1);
     else if (c.referencia !== null) add(sa, '• Ahorro mensual calculado: ' + eur(c.referencia), 1);
-    if (E.ahorroDisponible && !esP(E.ahorroDisponible) && c.totalAhorro === null) add(sa, '• Disponible en cuentas y depósitos: ' + lab(C.tramos.ahorro, E.ahorroDisponible), 1);
-    var prods = PRODUCTOS.filter(function (p) { return E[p[0]] && !esP(E[p[0]]) && E[p[0]] !== 'nada'; }).map(function (p) { return p[2] + ': ' + lab(C.tramos.ahorro, E[p[0]]).replace(' €', '').replace('Menos de ', '<').replace('Más de ', '>'); });
-    if (prods.length) add(sa, '• ' + prods.join(' · ') + ' €', 2);
-    else if (c.totalAhorro === 0) add(sa, '• Sin ahorro acumulado', 2);
+    if (num(E.ahorroDisponible) !== null && c.totalAhorro === null) add(sa, '• Disponible en cuentas y depósitos: ' + eur(E.ahorroDisponible), 1);
+    var prods = PRODUCTOS.filter(function (p) { return num(E[p[0]]); }).map(function (p) { return p[2] + ' ' + formatearNumero(E[p[0]]); });
+    if (c.totalAhorro) add(sa, '• Ahorro acumulado: ' + eur(c.totalAhorro), 1);
+    if (prods.length > 1 || (prods.length === 1 && !c.totalAhorro)) add(sa, '  (' + prods.join(', ') + ')', 2);
+    else if (prods.length === 1) add(sa, '  (todo en ' + PRODUCTOS.filter(function (p) { return num(E[p[0]]); })[0][2].toLowerCase() + ')', 2);
+    if (c.totalAhorro === 0) add(sa, '• Sin ahorro acumulado', 2);
 
     var sd = sec('Deudas');
     if (conHipoteca(E)) {
@@ -846,8 +841,8 @@ var PA = (function (C) {
     else if (marcado(E, 'deudas', 'ninguna')) add(sd, '• Sin otras deudas', 2);
 
     var spa = sec('Patrimonio');
-    if (E.valorVivienda && !esP(E.valorVivienda)) add(spa, '• Vivienda: ' + lab(C.tramos.inmueble, E.valorVivienda), 2);
-    if (E.otrosInmuebles) add(spa, '• Otros inmuebles: ' + (E.otrosInmuebles === 'si' ? 'sí' + (E.valorOtros && !esP(E.valorOtros) ? ' (' + lab(C.tramos.inmueble, E.valorOtros) + ')' : '') : 'no'), 2);
+    if (num(E.valorVivienda) !== null) add(spa, '• Vivienda: ' + eur(E.valorVivienda), 2);
+    if (E.otrosInmuebles) add(spa, '• Otros inmuebles: ' + (E.otrosInmuebles === 'si' ? 'sí' + (num(E.valorOtros) !== null ? ' (' + eur(E.valorOtros) + ')' : '') : 'no'), 2);
 
     var spr = sec('Protección');
     SEGUROS.forEach(function (s) {
@@ -864,8 +859,8 @@ var PA = (function (C) {
     var so = sec('Objetivos');
     (E.objetivos || []).forEach(function (o) {
       var nombre = o === 'otro' && E.o_otro_texto ? limpiarLibre(E.o_otro_texto).slice(0, 60) : lab(OBJETIVOS, o);
-      var imp = num(E['o_' + o + '_importe']), pl = E['o_' + o + '_plazo'];
-      add(so, '• ' + nombre + (imp ? ': ' + eur(imp) : '') + (pl ? (imp ? ' en ' : ': en ') + lab(C.tramos.plazo, pl).toLowerCase() : ''), 1);
+      var imp = num(E['o_' + o + '_importe']), pl = num(E['o_' + o + '_plazo']);
+      add(so, '• ' + nombre + (imp ? ': ' + eur(imp) : '') + (pl ? (imp ? ' en ' : ': en ') + pl + (pl === 1 ? ' año' : ' años') : ''), 1);
     });
 
     var pr = perfilRiesgo(E);
@@ -886,7 +881,7 @@ var PA = (function (C) {
       var l = s.lineas.filter(function (x) { return x.p <= maxP; }).map(function (x) { return x.t; });
       if (!l.length) return '';
       return (s.titulo ? '*' + s.titulo + '*\n' : '') + l.join('\n');
-    }).filter(Boolean).join('\n\n').replace(/(\d) (€|%)/g, '$1 $2'); // que "750 €" no se parta en dos líneas
+    }).filter(Boolean).join('\n\n').replace(/(\d) (€|%|años|año|meses|mes)(?![A-Za-zÀ-ÿ])/g,'$1 $2'); // que "750 €" no se parta en dos líneas
   }
 
   var NOTA_RECORTE = '\n\n_(Versión abreviada; tengo el texto completo si lo necesitas.)_';
@@ -989,7 +984,7 @@ var PA = (function (C) {
 <script id="ui">
 (function () {
   'use strict';
-  var KEY = 'preanalisis.v1';
+  var KEY = 'preanalisis.v2';
   var T = CONFIG.textos;
   var A = {}, modo = null, pantalla = 'portada', bloqueId = null, ultimo = { p: null, b: null };
   var P = PA.leerParametros(location.search);
@@ -1014,15 +1009,15 @@ var PA = (function (C) {
   };
   // Respuestas ficticias para el modo demostración (?demo=...). No corresponden a ningún cliente.
   var DEMO = {
-    edad: '35-44', pareja: 'si', hogar: '4', hijos: '2', hijoEdad1: '6-11', hijoEdad2: '12-17', laboral: 'asalariado', laboralPareja: 'asalariado', vivienda: 'hipoteca',
+    edad: 41, pareja: 'si', edadPareja: 39, hogar: '4', hijos: '2', hijoEdad1: 9, hijoEdad2: 13, laboral: 'asalariado', laboralPareja: 'asalariado', vivienda: 'hipoteca',
     ingTitular: 2100, pagasTitular: '14', ingPareja: 1500, pagasPareja: '12', estabilidad: 'fijos',
     cuotaHipoteca: 750, gSuministros: 180, gSeguros: 90, gColegios: 200, gTransporte: 250, gOtrosFijos: 130, gVariables: 900, ahorroMensual: 600,
-    savCuentas: '10-30', savDepositos: 'nada', savFondos: 'lt3', savPlanes: '3-10', savAcciones: 'nada', savOtros: 'nada',
+    savCuentas: 18000, savDepositos: 0, savFondos: 2500, savPlanes: 7000, savAcciones: 0, savOtros: 0,
     hipPendiente: 140000, hipTipo: 'variable', hipAnos: 22, deudas: ['coche'], d_coche_pend: 9000, d_coche_cuota: 250,
-    valorVivienda: '200-300', otrosInmuebles: 'no',
+    valorVivienda: 240000, otrosInmuebles: 'no',
     seg_vida: 'si', seg_vida_prima: 25, seg_vida_capital: 150000, seg_salud: 'no', seg_hogar: 'si', seg_hogar_prima: 30, seg_decesos: 'nose', seg_ahorro: 'no',
     edadJubilacion: 67, anosCotizados: 15,
-    objetivos: ['colchon', 'estudios'], o_colchon_importe: 10000, o_colchon_plazo: '1-3', o_estudios_importe: 20000, o_estudios_plazo: '10-20',
+    objetivos: ['colchon', 'estudios'], o_colchon_importe: 10000, o_colchon_plazo: 2, o_estudios_importe: 20000, o_estudios_plazo: 12,
     r1: '2', r2: '2', r3: '2', r4: '1', preocupacion: 'jubilacion', comentario: 'Quiero saber si llegaremos bien a la jubilación', horario: ['tardes']
   };
   var ESTADO_TXT = { verde: 'Bien', ambar: 'Mejorable', rojo: 'Atención', info: 'Dato', na: 'Pendiente' };
@@ -1312,6 +1307,8 @@ var PA = (function (C) {
       var html = '', neg = false;
       if (f.fn === 'totalIngresos') {
         if (c.ingresos !== null) html = 'Ingresos netos medios al mes (con pagas extra prorrateadas): <strong>' + PA.eur(c.ingresos) + '</strong>';
+      } else if (f.fn === 'totalAhorro') {
+        if (c.totalAhorro !== null) html = 'Ahorro acumulado total: <strong>' + PA.eur(c.totalAhorro) + '</strong>' + (c.liquido !== null && c.totalAhorro ? '<small>De ello, en cuentas y depósitos: ' + PA.eur(c.liquido) + '.</small>' : '');
       } else if (f.fn === 'totalFijos') {
         if (c.fijos !== null) html = 'Total gastos fijos: <strong>' + PA.eur(c.fijos) + ' al mes</strong>';
       } else if (f.fn === 'referencia') {
@@ -1441,7 +1438,7 @@ var PA = (function (C) {
   var demo = /[?&]demo=(completo|expres)(?:&|$)/.exec(location.search);
   if (demo) {
     A = JSON.parse(JSON.stringify(DEMO));
-    if (demo[1] === 'expres') { PA.BLOQUES.forEach(function (b) { b.campos.forEach(function (f) { if (!f.exp) delete A[f.k]; }); }); A.ahorroDisponible = '10-30'; }
+    if (demo[1] === 'expres') { PA.BLOQUES.forEach(function (b) { b.campos.forEach(function (f) { if (!f.exp) delete A[f.k]; }); }); A.ahorroDisponible = 18000; }
     modo = demo[1] === 'expres' ? 'express' : 'full';
     s = { pantalla: 'resultado' };
   }
