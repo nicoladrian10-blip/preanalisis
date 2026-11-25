@@ -4,6 +4,7 @@ Formulario web que el cliente rellena **antes de la primera reunión**. Al termi
 
 - **Enlace para clientes:** <https://nicoladrian10-blip.github.io/preanalisis/>
 - **Demostración con datos ficticios:** [`?demo=completo`](https://nicoladrian10-blip.github.io/preanalisis/?demo=completo) · [`?demo=expres`](https://nicoladrian10-blip.github.io/preanalisis/?demo=expres)
+- **Versión actual: v2** (cifras exactas: edad, edad de pareja e hijos, ahorro por producto en €, valor de inmuebles en € y plazos en años). La v1 (por tramos) queda archivada en [`/v1/`](https://nicoladrian10-blip.github.io/preanalisis/v1/) y no se mantiene. `/prueba-v2/` redirige al enlace principal.
 
 Todo está en un único fichero, [`index.html`](index.html): HTML, CSS y JavaScript sin librerías ni compilación. Se edita con cualquier editor de texto.
 
